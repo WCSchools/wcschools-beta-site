@@ -1,13 +1,20 @@
 /**
- * (c) Greg Priday, freely distributable under the terms of the GPL 2.0 license.
+ * (c) SiteOrigin, freely distributable under the terms of the GPL 2.0 license.
  */
 
 function loadMap($) {
     $('.sow-google-map-canvas').each(function () {
         var $$ = $(this);
+        var mapCenter = $$.data('address');
+        if(!mapCenter) {
+            var markers = $$.data('marker-positions');
+            if(markers && markers.length) {
+                mapCenter = markers[0].place;
+            }
+        }
         // We use the geocoder
         var geocoder = new google.maps.Geocoder();
-        geocoder.geocode({'address': $$.data('address')}, function (results, status) {
+        geocoder.geocode({'address': mapCenter}, function (results, status) {
             if (status == google.maps.GeocoderStatus.OK) {
                 var zoom = Number($$.data('zoom'));
                 if ( !zoom ) zoom = 14;
@@ -53,20 +60,28 @@ function loadMap($) {
                 if ( markerPositions && markerPositions.length ) {
                     markerPositions.forEach(
                         function(mrkr) {
-                            geocoder.geocode( { 'address': mrkr.place }, function (res, status) {
-                                if ( status == google.maps.GeocoderStatus.OK ) {
-                                    new google.maps.Marker({
-                                        position: res[0].geometry.location,
-                                        map: map,
-                                        draggable: Boolean( $$.data('markers-draggable') ),
-                                        icon: $$.data('marker-icon'),
-                                        title: ''
-                                    });
-                                }
-                            });
+                            var geocodeMarker = function () {
+                                geocoder.geocode({'address': mrkr.place}, function (res, status) {
+                                    if (status == google.maps.GeocoderStatus.OK) {
+                                        new google.maps.Marker({
+                                            position: res[0].geometry.location,
+                                            map: map,
+                                            draggable: Boolean($$.data('markers-draggable')),
+                                            icon: $$.data('marker-icon'),
+                                            title: ''
+                                        });
+                                    } else if (status == google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
+                                        //try again please
+                                        setTimeout(geocodeMarker, Math.random() * 1000, mrkr);
+                                    }
+                                });
+                            };
+                            //set random delays of 0 - 1 seconds when geocoding markers to try avoid hitting the query limit
+                            setTimeout(geocodeMarker, Math.random() * 1000, mrkr);
                         }
                     );
                 }
+
 
                 var directions = $$.data('directions');
                 if ( directions ) {
@@ -127,7 +142,7 @@ function initialize() {
 }
 
 jQuery(function ($) {
-    if (window.google) {
+    if (window.google && window.google.maps) {
         loadMap($);
     } else {
         loadApi($);

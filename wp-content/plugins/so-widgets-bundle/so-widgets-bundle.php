@@ -3,7 +3,7 @@
 /*
 Plugin Name: SiteOrigin Widgets Bundle
 Description: A collection of all our widgets, neatly bundled into a single plugin.
-Version: 1.1.2
+Version: 1.2.4
 Author: SiteOrigin
 Author URI: http://siteorigin.com
 Plugin URI: http://siteorigin.com/widgets-bundle/
@@ -11,7 +11,8 @@ License: GPL3
 License URI: https://www.gnu.org/licenses/gpl-3.0.txt
 */
 
-define('SOW_BUNDLE_VERSION', '1.1.2');
+define('SOW_BUNDLE_VERSION', '1.2.4');
+define('SOW_BUNDLE_JS_SUFFIX', '.min');
 define('SOW_BUNDLE_BASE_FILE', __FILE__);
 
 // We're going to include this check until version 1.2
@@ -45,7 +46,7 @@ class SiteOrigin_Widgets_Bundle {
 
 		// Initialize the widgets, but do it fairly late
 		add_action( 'plugins_loaded', array($this, 'set_plugin_textdomain'), 1 );
-		add_action( 'plugins_loaded', array($this, 'load_widget_plugins'), 1 );
+		add_action( 'init', array($this, 'load_widget_plugins'), 1 );
 
 		// Add the action links.
 		add_action( 'plugin_action_links_' . plugin_basename(__FILE__), array($this, 'plugin_action_links') );
@@ -57,6 +58,8 @@ class SiteOrigin_Widgets_Bundle {
 		add_filter( 'siteorigin_panels_data', array($this, 'load_missing_widgets') );
 		add_filter( 'siteorigin_panels_prebuilt_layout', array($this, 'load_missing_widgets') );
 		add_filter( 'siteorigin_panels_widget_object', array($this, 'load_missing_widget'), 10, 2 );
+
+		add_filter( 'wp_enqueue_scripts', array($this, 'enqueue_active_widgets_scripts') );
 	}
 
 	/**
@@ -157,7 +160,7 @@ class SiteOrigin_Widgets_Bundle {
 	function get_active_widgets( $filter = true ){
 		// Load all the widget we currently have active and filter them
 		$active_widgets = get_option( 'siteorigin_widgets_active', self::$default_active_widgets );
-		if($filter) {
+		if( $filter ) {
 			$active_widgets = apply_filters( 'siteorigin_widgets_active_widgets',  $active_widgets);
 		}
 
@@ -169,8 +172,8 @@ class SiteOrigin_Widgets_Bundle {
 	 */
 	function admin_enqueue_scripts($prefix) {
 		if( $prefix != 'plugins_page_so-widgets-plugins' ) return;
-		wp_enqueue_style( 'siteorigin-widgets-bundle-admin', plugin_dir_url( __FILE__ ) . 'css/admin.css', array(), SOW_BUNDLE_VERSION );
-		wp_enqueue_script( 'siteorigin-widgets-bundle-admin', plugin_dir_url( __FILE__ ) . 'js/admin.js', array(), SOW_BUNDLE_VERSION );
+		wp_enqueue_style( 'siteorigin-widgets-manage-admin', plugin_dir_url( __FILE__ ) . 'admin/admin.css', array(), SOW_BUNDLE_VERSION );
+		wp_enqueue_script( 'siteorigin-widgets-manage-admin', plugin_dir_url( __FILE__ ) . 'admin/admin' . SOW_BUNDLE_JS_SUFFIX . '.js', array(), SOW_BUNDLE_VERSION );
 	}
 
 	/**
@@ -210,12 +213,12 @@ class SiteOrigin_Widgets_Bundle {
 	 * @action wp_ajax_so_widgets_bundle_manage
 	 */
 	function admin_ajax_manage_handler(){
-		if(!wp_verify_nonce($_GET['_wpnonce'], 'manage_so_widget')) exit();
-		if(!current_user_can('install_plugins')) exit();
-		if(empty($_GET['widget'])) exit();
+		if( !wp_verify_nonce($_GET['_wpnonce'], 'manage_so_widget') ) exit();
+		if( !current_user_can( apply_filters('siteorigin_widgets_admin_menu_capability', 'install_plugins') ) ) exit();
+		if( empty($_GET['widget']) ) exit();
 
 		if( $_POST['active'] == 'true' ) $this->activate_widget($_GET['widget']);
-		else $this->deactivate_widget($_GET['widget']);
+		else $this->deactivate_widget( $_GET['widget'] );
 
 		// Send a kind of dummy response.
 		header('content-type: application/json');
@@ -232,7 +235,7 @@ class SiteOrigin_Widgets_Bundle {
 		add_plugins_page(
 			__('SiteOrigin Widgets', 'siteorigin-widgets'),
 			__('SiteOrigin Widgets', 'siteorigin-widgets'),
-			'install_plugins',
+			apply_filters('siteorigin_widgets_admin_menu_capability', 'install_plugins'),
 			'so-widgets-plugins',
 			array($this, 'admin_page')
 		);
@@ -268,19 +271,20 @@ class SiteOrigin_Widgets_Bundle {
 			<?php
 		}
 
-		include plugin_dir_path(__FILE__).'tpl/admin.php';
+		include plugin_dir_path(__FILE__).'admin/tpl/admin.php';
 	}
 
 	/**
 	 * Get javascript variables for admin.
 	 */
 	function admin_ajax_get_javascript_variables() {
+		if ( empty( $_REQUEST['_widgets_nonce'] ) || !wp_verify_nonce( $_REQUEST['_widgets_nonce'], 'widgets_action' ) ) return;
 		$result = array();
 		$widget_class = $_POST['widget'];
 		global $wp_widget_factory;
 		if ( ! empty( $wp_widget_factory->widgets[ $widget_class ] ) ) {
 			$widget = $wp_widget_factory->widgets[ $widget_class ];
-			$result = $widget->get_javascript_variables();
+			if( method_exists($widget, 'get_javascript_variables') ) $result = $widget->get_javascript_variables();
 		}
 
 		header('content-type: application/json');
@@ -411,10 +415,10 @@ class SiteOrigin_Widgets_Bundle {
 		global $wp_widget_factory;
 
 		foreach($data['widgets'] as $widget) {
-			if( empty($widget['info']['class']) ) continue;
-			if( !empty($wp_widget_factory->widgets[$widget['info']['class']] ) ) continue;
+			if( empty($widget['panels_info']['class']) ) continue;
+			if( !empty($wp_widget_factory->widgets[$widget['panels_info']['class']] ) ) continue;
 
-			$class = $widget['info']['class'];
+			$class = $widget['panels_info']['class'];
 			if( preg_match('/SiteOrigin_Widget_([A-Za-z]+)_Widget/', $class, $matches) ) {
 				$name = $matches[1];
 				$id = 'so'.strtolower( implode( '-', preg_split('/(?=[A-Z])/',$name) ) ).'-widget';
@@ -458,10 +462,38 @@ class SiteOrigin_Widgets_Bundle {
 		$links[] = '<a href="http://siteorigin.com/thread/" target="_blank">'.__('Support', 'siteorigin-widgets').'</a>';
 		return $links;
 	}
+
+	/**
+	 * Ensure active widgets' scripts are enqueued at the right time.
+	 */
+	function enqueue_active_widgets_scripts() {
+		global $wp_registered_widgets;
+		$sidebars_widgets = wp_get_sidebars_widgets();
+		foreach( $sidebars_widgets as $sidebar => $widgets ) {
+			if ( ! empty( $widgets ) && $sidebar !== "wp_inactive_widgets") {
+				foreach ( $widgets as $i => $id ) {
+					if ( ! empty( $wp_registered_widgets[$id] ) ) {
+						$widget = $wp_registered_widgets[$id]['callback'][0];
+						if ( !empty($widget) && is_object($widget) && is_subclass_of($widget, 'SiteOrigin_Widget') && is_active_widget( false, false, $widget->id_base ) ) {
+							$opt_wid = get_option( 'widget_' . $widget->id_base );
+							preg_match( '/-([0-9]+$)/', $id, $num_match );
+							$widget_instance = $opt_wid[ $num_match[1] ];
+							$widget->enqueue_frontend_scripts( $widget_instance);
+							$widget->generate_and_enqueue_instance_styles( $widget_instance );
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 // create the initial single
 SiteOrigin_Widgets_Bundle::single();
+
+// Initialize the Meta Box Manager
+global $sow_meta_box_manager;
+$sow_meta_box_manager = SiteOrigin_Widget_Meta_Box_Manager::single();
 
 /**
  * Deactivate any old widget plugins that we used to have on the directory. We'll remove this after version 1.2.

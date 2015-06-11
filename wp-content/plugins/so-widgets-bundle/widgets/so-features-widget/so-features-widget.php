@@ -65,8 +65,7 @@ class SiteOrigin_Widget_Features_Widget extends SiteOrigin_Widget {
 
 						'text' => array(
 							'type' => 'text',
-							'label' => __('Text', 'siteorigin-widgets'),
-							'allow_html_formatting' => true
+							'label' => __('Text', 'siteorigin-widgets')
 						),
 
 						'more_text' => array(
@@ -75,9 +74,8 @@ class SiteOrigin_Widget_Features_Widget extends SiteOrigin_Widget {
 						),
 
 						'more_url' => array(
-							'type' => 'text',
+							'type' => 'link',
 							'label' => __('More link URL', 'siteorigin-widgets'),
-							'sanitize' => 'url',
 						),
 					),
 				),
@@ -136,16 +134,25 @@ class SiteOrigin_Widget_Features_Widget extends SiteOrigin_Widget {
 		);
 	}
 
+	function initialize() {
+		$this->register_frontend_styles(
+			array(
+				array(
+					'siteorigin-widgets',
+					siteorigin_widget_get_plugin_dir_url( 'features' ) . 'css/style.css',
+					array(),
+					SOW_BUNDLE_VERSION
+				)
+			)
+		);
+	}
+
 	function get_style_name($instance){
 		return false;
 	}
 
 	function get_template_name($instance){
 		return 'base';
-	}
-
-	function enqueue_frontend_scripts(){
-		wp_enqueue_style('siteorigin-widgets', siteorigin_widget_get_plugin_dir_url('features').'css/style.css', array(), SOW_BUNDLE_VERSION );
 	}
 
 	function modify_form( $form ){

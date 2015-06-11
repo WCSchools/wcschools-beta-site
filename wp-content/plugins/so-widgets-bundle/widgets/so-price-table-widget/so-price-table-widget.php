@@ -66,8 +66,7 @@ class SiteOrigin_Widget_PriceTable_Widget extends SiteOrigin_Widget {
 							'label' => __('Button text', 'siteorigin-widgets'),
 						),
 						'url' => array(
-							'type' => 'text',
-							'sanitize' => 'url',
+							'type' => 'link',
 							'label' => __('Button URL', 'siteorigin-widgets'),
 						),
 						'features' => array(
@@ -130,6 +129,18 @@ class SiteOrigin_Widget_PriceTable_Widget extends SiteOrigin_Widget {
 				),
 			),
 			plugin_dir_path(__FILE__).'../'
+		);
+	}
+
+	function initialize() {
+		$this->register_frontend_scripts(
+			array(
+				array(
+					'siteorigin-pricetable',
+					siteorigin_widget_get_plugin_dir_url( 'price-table' ) . 'js/pricetable' . SOW_BUNDLE_JS_SUFFIX . '.js',
+					array( 'jquery' )
+				)
+			)
 		);
 	}
 
@@ -196,14 +207,6 @@ class SiteOrigin_Widget_PriceTable_Widget extends SiteOrigin_Widget {
 		}
 
 		return $colors;
-	}
-
-	/**
-	 * Load the front end scripts for the price table.
-	 */
-	function enqueue_frontend_scripts(){
-		$js_suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
-		wp_enqueue_script( 'siteorigin-pricetable', siteorigin_widget_get_plugin_dir_url('price-table').'js/pricetable' . $js_suffix . '.js', array('jquery') );
 	}
 
 	/**

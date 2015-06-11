@@ -9,7 +9,7 @@ if( empty($instance['frames']) ) return;
 
 ?>
 
-<div tabindex="0" class="sow-slider-base <?php if( wp_is_mobile() ) echo 'sow-slider-is-mobile' ?> <?php if( $instance['nav_color'] == 'black' ) echo 'sow-slider-nav-black' ?>" style="display: none">
+<div tabindex="0" class="sow-slider-base <?php if( wp_is_mobile() ) echo 'sow-slider-is-mobile' ?> <?php if( !empty($instance['nav_color']) && $instance['nav_color'] == 'black' ) echo 'sow-slider-nav-black' ?>" style="display: none">
 
 	<ul class="sow-slider-images" data-settings="<?php echo esc_attr(json_encode($settings)) ?>">
 		<?php
@@ -24,15 +24,13 @@ if( empty($instance['frames']) ) return;
 			<li
 				class="sow-slider-image sow-slider-image-<?php echo $frame['background_image_type'] ?>"
 				style="<?php if(!empty($background_image[0]) && (!empty($foreground_image)) || !empty($frame['background_videos']) ) echo 'background-image: url('.$background_image[0].');' ?>">
-
 				<?php
-
 				if( !empty( $frame['foreground_image'] ) ) {
 					?>
 					<div class="sow-slider-image-container">
 						<div class="sow-slider-image-wrapper" style="max-width: <?php echo intval($foreground_image[1]) ?>px; ">
 							<?php
-							if(!empty($frame['url'])) echo '<a href="' . esc_url($frame['url']) . '">';
+							if(!empty($frame['url'])) echo '<a href="' . sow_esc_url($frame['url']) . '">';
 							echo wp_get_attachment_image($frame['foreground_image'], 'full');
 							if(!empty($frame['url'])) echo '</a>';
 							?>
@@ -45,14 +43,14 @@ if( empty($instance['frames']) ) return;
 				}
 				else {
 					// We need to find another background
-					if(!empty($frame['url'])) echo '<a href="' . esc_url($frame['url']) . '">';
+					if(!empty($frame['url'])) echo '<a href="' . sow_esc_url($frame['url']) . '" ' . ( !empty($frame['new_window']) ? 'target="_blank"' : '' ) . '>';
 
-					if( !empty($frame['background_image']) ){
-						echo wp_get_attachment_image($frame['background_image'], 'full');
+					if( !empty($frame['background_videos']) ){
+						$this->video_code($frame['background_videos'], array('sow-full-element'));
 					}
 					else {
-						// Lets use the video
-						$this->video_code($frame['background_videos'], array('sow-full-element'));
+						// Lets use the background image
+						echo wp_get_attachment_image($frame['background_image'], 'full');
 					}
 
 					if(!empty($frame['url'])) echo '</a>';

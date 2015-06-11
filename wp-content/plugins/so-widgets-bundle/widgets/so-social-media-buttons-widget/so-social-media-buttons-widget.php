@@ -42,7 +42,7 @@ class SiteOrigin_Widget_SocialMediaButtons_Widget extends SiteOrigin_Widget {
 					'fields'     => array(
 						'name'         => array(
 							'type'    => 'select',
-							'label'   => __( '', 'siteorigin-widgets' ),
+							'label'   => '',
 							'prompt'  => __( 'Select network', 'siteorigin-widgets' ),
 							'options' => $network_names
 						),
@@ -179,6 +179,8 @@ class SiteOrigin_Widget_SocialMediaButtons_Widget extends SiteOrigin_Widget {
 	}
 
 	function get_less_variables( $instance ) {
+		if( empty( $instance ) ) return;
+
 		$design = $instance['design'];
 		$m      = $design['margin'];
 		$top = $right = $bottom = $left = $m . 'em';
