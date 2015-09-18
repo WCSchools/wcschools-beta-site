@@ -3,15 +3,15 @@ Contributors: netweblogic, mikelynn
 Tags: calendar, calendars, jQuery calendar, ajax calendar, event calendars, events calendar
 Requires at least: 3.6
 Tested up to: 4.2.1
-Stable tag: 0.9
+Stable tag: 0.9.1
 
 Uses the jQuery FullCalendar plugin to create a stunning calendar view of events, posts and other custom post types
 
 == Description ==
 
-[FullCalendar](http://arshaw.com/fullcalendar/ "jQuery Calendar Plugin") is a free open source jQuery plugin by Adam Arshaw which generates a stunning calendar populated with your events, posts or any other custom post type.
+[FullCalendar](http://arshaw.com/fullcalendar/ "jQuery Calendar Plugin") is a free open source jQuery plugin by Adam Arshaw which generates a stunning calendar populated with your events.
 
-This plugin combines the power of FullCalendar and WordPress to present your posts in a calendar format, which can be filtered by custom taxonomies such as categories and tags.
+This plugin combines the power of FullCalendar and WordPress to present your posts or any other custom post type in a calendar format, which can be filtered by custom taxonomies such as categories and tags.
 
 [Demo - See it in action](http://demo.wp-events-plugin.com/calendar/ "Events Manager Calendar Plugin")
 
@@ -35,7 +35,7 @@ This plugin combines the power of FullCalendar and WordPress to present your pos
 
 Here's a rough roadmap of where we're heading, and will be ammended as time permits
 
-* Transition to the FullCalendar 2 JS framework
+* Transition to the FullCalendar 2 JS framework (will be added to WP Fullcalendar 1.0 in coming weeks)
 * Move away from using qTips (or make as an alternative) and use jQuery UI tooltips instead
 * Add more native FullCalendar options to the settings page
 * Add formats for custom post types (currently only possible with Events Manager)
@@ -47,6 +47,12 @@ Here's a rough roadmap of where we're heading, and will be ammended as time perm
 Install this plugin like a normal WordPress plugin. Once activated, you'll see a new panel in the Settings section for editing the options for calendar display.
 
 == Changelog ==
+= 0.9.1 =
+* fixed privacy/security vulnerability where post types of any status can be retrieved via AJAX request (Thanks to [François Harvey](http://francoisharvey.ca/) for reporting this responsably)
+* fixed ui-lightness theme stylesheet not being loaded (due to inconsistent file naming in jQuery UI bundle)
+* fixed "No Theme" selection attempting to load non-existent CSS files (requires settings resave)
+* fixed attachment post type tooltip not outputting a thumbnail image
+
 = 0.9 =
 * fixed E_STRICT warning for calling non-static functions
 * moved hard-coded translations out of wp-fullcalendar.php into wpfc-languages.php to prevent encoding issues when editing/committing

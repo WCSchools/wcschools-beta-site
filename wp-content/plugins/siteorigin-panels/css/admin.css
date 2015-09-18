@@ -399,7 +399,7 @@
   color: #FF0000;
 }
 .siteorigin-panels-builder .so-rows-container .so-row-container .so-cells .cell .widgets-container .so-widget .title .actions a.widget-delete:hover {
-  color: white;
+  color: #ffffff;
   background: #FF0000;
 }
 .siteorigin-panels-builder .so-rows-container .so-row-container .so-cells .cell .widgets-container .so-widget:hover .title a {
@@ -588,7 +588,7 @@
   color: #FF0000;
 }
 .so-widget.ui-sortable-helper.widget-being-dragged .title .actions a.widget-delete:hover {
-  color: white;
+  color: #ffffff;
   background: #FF0000;
 }
 .so-widget.ui-sortable-helper.widget-being-dragged:hover .title a {
@@ -1321,7 +1321,7 @@
   border-bottom: 1px solid #ddd;
 }
 .so-panels-dialog .so-visual-styles .style-section-head {
-  background: white;
+  background: #ffffff;
   padding: 15px 10px;
   border-bottom: 1px solid #ddd;
   cursor: pointer;
@@ -1532,7 +1532,7 @@
 }
 .so-panels-live-editor .so-sidebar .page-widgets .page-widgets-section .section-header {
   cursor: pointer;
-  background: white;
+  background: #ffffff;
   padding: 15px 10px;
   border: solid #ddd;
   border-width: 1px 0;
@@ -1630,14 +1630,6 @@
 #panels-home-page {
   /* The Switch - © 2013 Thibaut Courouble - MIT License */
 }
-#panels-home-page .siteorigin-panels-builder {
-  border: 1px solid #D0D0D0;
-  background-color: #ffffff;
-  margin: 10px 0;
-}
-#panels-home-page .siteorigin-panels-builder.so-panels-loading {
-  min-height: 150px;
-}
 #panels-home-page .switch {
   margin: 0 10px 0 0;
   float: left;
@@ -1647,7 +1639,7 @@
   width: 68px;
   height: 24px;
   padding: 3px;
-  background-color: white;
+  background-color: #ffffff;
   border-radius: 24px;
   box-shadow: inset 0 -1px #ffffff, inset 0 1px 1px rgba(0, 0, 0, 0.05);
   cursor: pointer;
@@ -1700,7 +1692,7 @@
 #panels-home-page .switch .switch-label:after {
   content: attr(data-on);
   left: 13px;
-  color: white;
+  color: #ffffff;
   text-shadow: 0 1px rgba(0, 0, 0, 0.2);
   opacity: 0;
 }
@@ -1720,7 +1712,7 @@
   left: 4px;
   width: 22px;
   height: 22px;
-  background: white;
+  background: #ffffff;
   border-radius: 12px;
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);
   background-image: -webkit-linear-gradient(top, #ffffff 40%, #f0f0f0);
@@ -1758,6 +1750,14 @@
 #panels-home-page #panels-view-as-page {
   display: inline-block;
   margin-left: 50px;
+}
+.siteorigin-panels-builder-form .siteorigin-panels-builder {
+  border: 1px solid #D0D0D0;
+  background-color: #ffffff;
+  margin: 10px 0;
+}
+.siteorigin-panels-builder-form .siteorigin-panels-builder.so-panels-loading {
+  min-height: 150px;
 }
 .siteorigin-page-builder-widget .siteorigin-panels-display-builder {
   display: inline-block !important;

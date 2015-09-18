@@ -1,8 +1,8 @@
 === SiteOrigin Widgets Bundle ===
-Tags: bundle, widget, button, slider, image, carousel, price table
+Tags: bundle, widget, button, slider, image, carousel, price table, google maps, tinymce, social links
 Requires at least: 3.9
-Tested up to: 4.2
-Stable tag: 1.2.3
+Tested up to: 4.3
+Stable tag: 1.4.1
 License: GPLv3 or later
 Contributors: gpriday, braam-genis
 
@@ -30,7 +30,13 @@ The collection is growing, but here’s what we have so far.
 
 Once you enable a widget, you'll be able to use it anywhere standard widgets are used. You can manage your widgets by going to Plugins > SiteOrigin Widgets in your WordPress admin.
 
-[Documentation](https://siteorigin.com/widgets-bundle/) is available on SiteOrigin.
+== Documentation ==
+
+[Documentation](https://siteorigin.com/css/getting-started/) is available on SiteOrigin.
+
+== Support ==
+
+We offer free support on the [SiteOrigin support forums](https://siteorigin.com/thread/).
 
 = Create Custom Widgets =
 
@@ -43,6 +49,40 @@ The SiteOrigin Widgets Bundle is the perfect platform to build widgets for your 
 3. An example of the button widget.
 
 == Changelog ==
+
+= 1.4.2 - August 18 2015 =
+* Urgent fix in preparation for WordPress 4.3 release
+
+= 1.4.1 - August 17 2015 =
+* Updated to latest Font Awesome.
+* Added TripAdvisor to social links widget.
+* Allow unfiltered HTML in SiteOrigin Editor Widget if user has rights.
+* Properly set URL scheme.
+* Fixed state emitter issue for Google Maps Widget.
+
+= 1.4 - July 20 2015 =
+* Created a base slider widget class.
+* Converted current slider widget to use base slider.
+* Fixed image sizing in slider widget.
+* Added plain background color option to slider widget.
+* Added new Hero Image widget.
+* Fixed repeaters in sub items.
+
+= 1.3.1 =
+* Fix to TinyMCE field when moved in Customizer and Widgets interface.
+* Small developer level improvements.
+* Fixed autoplay in video widget.
+* Fixed behaviour of slides in slider widget.
+
+= 1.3 =
+* Added TinyMCE field type.
+* All fields now use classes to make them easier to extend.
+* Added SiteOrigin Editor widget.
+* Made it possible for other plugins to filter default widgets.
+* Fixed WordPress CLI compatibility.
+* Added unit tests.
+* Added networks to social networks widget.
+* Changed how repeater HTML is stored.
 
 = 1.2.4 =
 * Fixed reference to siteorigin_widgets_is_google_webfont.

@@ -77,7 +77,7 @@ class WPFC_Admin {
 								<ul class="wpfc-post-types">
 									<?php 
 									$selected_taxonomies = get_option('wpfc_post_taxonomies');
-									foreach( get_post_types( apply_filters('wpfc_get_post_types_args', array('public'=>true ))) as $post_type ){
+									foreach( get_post_types( apply_filters('wpfc_get_post_types_args', array('public'=>true )), 'names') as $post_type ){
 		 								$checked = get_option('wpfc_default_type') == $post_type ? 'checked':'';
 		 								$post_data = get_post_type_object($post_type);
 										echo "<li><label><input type='radio' class='wpfc-post-type' name='wpfc_default_type' value='$post_type' $checked />&nbsp;&nbsp;{$post_data->labels->name} (<em>$post_type</em>)</label>";
@@ -149,7 +149,7 @@ class WPFC_Admin {
 							        <th scope="row" valign="top"><label for="product_package_unit_price"><?php _e( 'jQuery CSS Theme?', 'wpfc' ); ?></label></th>
 							        <td>
 							            <select name="wpfc_theme_css">
-							            	<option><?php _e( 'No Theme','wpfc' ); ?></option>
+							            	<option value="0"><?php _e( 'No Theme','wpfc' ); ?></option>
 							            	<optgroup label="<?php _e('Built-In','wpfc'); ?>">
 								            	<?php foreach( $jquery_themes as $jquery_theme ): ?>
 								            	<option <?php if(get_option('wpfc_theme_css') == $jquery_theme) echo 'selected="selected"'; ?>><?php echo esc_html($jquery_theme); ?></option>

@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP FullCalendar
-Version: 0.9
+Version: 0.9.1
 Plugin URI: http://wordpress.org/extend/plugins/wp-fullcalendar/
 Description: Uses the jQuery FullCalendar plugin to create a stunning calendar view of events, posts and eventually other CPTs. Integrates well with Events Manager
 Author: Marcus Sykes
@@ -9,7 +9,7 @@ Author URI: http://msyk.es
 */
 
 /*
-Copyright (c) 2012, Marcus Sykes
+Copyright (c) 2015, Marcus Sykes
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -153,10 +153,15 @@ class WP_FullCalendar{
 	    //sort out args
 	    unset($_REQUEST['month']); //no need for these two
 	    unset($_REQUEST['year']);
+	    //let's make 'end' a month and two weeks away from 'start' because we only need to view one month at a time +- a week each side
+	    if( $_REQUEST['end'] > $_REQUEST['start'] + (86400 * 46) ) $_REQUEST['end'] = $_REQUEST['start'] + (86400 * 46); //31 days + 15 days
 	    $args = array ('scope'=>array(date("Y-m-d", $_REQUEST['start']), date("Y-m-d", $_REQUEST['end'])), 'owner'=>false, 'status'=>1, 'order'=>'ASC', 'orderby'=>'post_date','full'=>1);
 	    //get post type and taxonomies, determine if we're filtering by taxonomy
-	    $post_type = !empty($_REQUEST['type']) ? $_REQUEST['type']:'post';
+	    $post_types = get_post_types(array('public'=>true),'names');
+	    $post_type = !empty($_REQUEST['type']) && in_array($_REQUEST['type'], $post_types) ? $_REQUEST['type']:get_option('wpfc_default_type');
 	    $args['post_type'] = $post_type;
+	    $args['post_status'] = 'publish'; //only show published status
+	    $args['posts_per_page'] = -1;
 	    if( $args['post_type'] == 'attachment' ) $args['post_status'] = 'inherit';
 	    $args['tax_query'] = array();
 	    foreach( get_object_taxonomies($post_type) as $taxonomy_name ){
@@ -169,7 +174,7 @@ class WP_FullCalendar{
 	        }
 	    }
 	    //initiate vars
-	    $args = apply_filters('wpfc_fullcalendar_args', array_merge($_REQUEST, $args));
+	    $args = apply_filters('wpfc_fullcalendar_args', $args);
 		$limit = get_option('wpfc_limit',3);
 	    $items = array();
 	    $item_dates_more = array();
@@ -177,7 +182,8 @@ class WP_FullCalendar{
 	    
 	    //Create our own loop here and tamper with the where sql for date ranges, as per http://codex.wordpress.org/Class_Reference/WP_Query#Time_Parameters
 	    function wpfc_temp_filter_where( $where = '' ) {
-	    	$where .= " AND post_date >= '".date("Y-m-d", $_REQUEST['start'])."' AND post_date < '".date("Y-m-d", $_REQUEST['end'])."'";
+	        global $wpdb;
+	    	$where .= $wpdb->prepare(" AND post_date >= %s AND post_date < %s", date("Y-m-d", $_REQUEST['start']), date("Y-m-d", $_REQUEST['end']));
 	    	return $where;
 	    }
 	    add_filter( 'posts_where', 'wpfc_temp_filter_where' );
@@ -219,12 +225,16 @@ class WP_FullCalendar{
 	    $content = '';
 		if( !empty($_REQUEST['post_id']) ){
 	        $post = get_post($_REQUEST['post_id']);
-	        $content = ( !empty($post) ) ? $post->post_content : '';
-	        if( get_option('wpfc_qtips_image',1) ){
-	            $post_image = get_the_post_thumbnail($post->ID, array(get_option('wpfc_qtip_image_w',75),get_option('wpfc_qtip_image_h',75)));
-	            if( !empty($post_image) ){
-	                $content = '<div style="float:left; margin:0px 5px 5px 0px;">'.$post_image.'</div>'.$content;
-	            }
+	        if( $post->post_type == 'attachment' ){
+	            $content = wp_get_attachment_image($post->ID, 'thumbnail');
+	        }else{
+    	        $content = ( !empty($post) ) ? $post->post_content : '';
+    	        if( get_option('wpfc_qtips_image',1) ){
+    	            $post_image = get_the_post_thumbnail($post->ID, array(get_option('wpfc_qtip_image_w',75),get_option('wpfc_qtip_image_h',75)));
+    	            if( !empty($post_image) ){
+    	                $content = '<div style="float:left; margin:0px 5px 5px 0px;">'.$post_image.'</div>'.$content;
+    	            }
+    	        }
 	        }
 	    }
 		echo apply_filters('wpfc_qtip_content', $content);
