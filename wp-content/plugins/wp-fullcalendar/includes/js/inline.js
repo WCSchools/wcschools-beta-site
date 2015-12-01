@@ -43,18 +43,16 @@ jQuery(document).ready( function($){
 	    },
 		loading: function(bool) {
 			if (bool) {
-				var position = $('#wpfc-calendar').position();
+				var position = $('.wpfc-calendar').position();
 				$('.wpfc-loading').css('left',position.left).css('top',position.top).css('width',$('#calendar').width()).css('height',$('#calendar').height()).show();
 			}else {
 				wpfc_counts = {};
 				$('.wpfc-loading').hide();
 			}
 		},
-		viewDisplay: function(view) {
+		viewRender: function(view) {
 			if( !wpfc_loaded ){
-				$('.fc-header tbody').append('<tr><td id="wpfc-filters"  colspan="3"></td></tr>');
-				search_menu = $('#wpfc-calendar-search').show();
-				$('#wpfc-filters').append(search_menu);
+				$('.fc-toolbar').after($('.wpfc-calendar-search').show());
 				//catchall selectmenu handle
 			    $.widget( "custom.wpfc_selectmenu", $.ui.selectmenu, {
 			        _renderItem: function( ul, item ) {
@@ -71,10 +69,12 @@ jQuery(document).ready( function($){
 						return text.replace(/#([a-zA-Z0-9]{3}[a-zA-Z0-9]{3}?) - /g, '<span class="wpfc-cat-icon" style="background-color:#$1"></span>');
 					},
 					select: function( event, ui ){
+						var calendar = $('.wpfc-calendar');
 						menu_name = $(this).attr('name');
 						$( '#' + menu_name + '-button .ui-selectmenu-text' ).html( ui.item.label.replace(/#([a-zA-Z0-9]{3}[a-zA-Z0-9]{3}?) - /g, '<span class="wpfc-cat-icon" style="background-color:#$1"></span>') );
 						WPFC.data[menu_name] = ui.item.value;
-						$('#wpfc-calendar').fullCalendar('removeEventSource', WPFC.ajaxurl).fullCalendar('addEventSource', {url : WPFC.ajaxurl, allDayDefault:false, ignoreTimezone: true, data : WPFC.data});
+						calendar.fullCalendar('removeEventSource', WPFC.ajaxurl);
+						calendar.fullCalendar('addEventSource', {url : WPFC.ajaxurl, allDayDefault:false, ignoreTimezone: true, data : WPFC.data});
 					}
 				})
 			}
@@ -85,5 +85,5 @@ jQuery(document).ready( function($){
 		$.extend(fullcalendar_args, WPFC.wpfc_locale);
 	}
 	$(document).trigger('wpfc_fullcalendar_args', [fullcalendar_args]);
-	$('#wpfc-calendar').fullCalendar(fullcalendar_args);
+	$('.wpfc-calendar').fullCalendar(fullcalendar_args);
 });

@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP FullCalendar
-Version: 0.9.1
+Version: 1.0
 Plugin URI: http://wordpress.org/extend/plugins/wp-fullcalendar/
 Description: Uses the jQuery FullCalendar plugin to create a stunning calendar view of events, posts and eventually other CPTs. Integrates well with Events Manager
 Author: Marcus Sykes
@@ -22,7 +22,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
 
-define('WPFC_VERSION', '1.0.2');
+define('WPFC_VERSION', '1.0.3');
 define('WPFC_UI_VERSION','1.11'); //jQuery 1.11.x
 
 class WP_FullCalendar{
@@ -49,6 +49,13 @@ class WP_FullCalendar{
 		//base arguments
 		self::$args['type'] = get_option('wpfc_default_type','event');
 		//START Events Manager Integration - will soon be removed
+		if( defined('EM_VERSION') && EM_VERSION <= 5.61 ){
+		    if( !empty($_REQUEST['action']) && $_REQUEST['action'] = 'WP_FullCalendar' && $_REQUEST['type'] == EM_POST_TYPE_EVENT ){
+		        //reset the start/end times for Events Manager 5.6.1 and less, to avoid upgrade-breakages
+		        $_REQUEST['start'] = $_POST['start'] = strtotime($_REQUEST['start']); //maybe excessive, but easy sanitization
+		        $_REQUEST['end'] = $_POST['end'] = strtotime($_REQUEST['end']);
+		    }
+		}
 		if( defined('EM_VERSION') && is_admin() ){
 		    include('wpfc-events-manager.php');
 		}
@@ -73,8 +80,8 @@ class WP_FullCalendar{
 		        //if you're using jQuery UI Theme-Roller, you need to include the jquery-ui-css framework file too, you could do this using the @import CSS rule or include it all in your CSS file
 		        if( file_exists(get_stylesheet_directory()."/plugins/wp-fullcalendar/".$wpfc_theme) ){
 		            $wpfc_theme_css = get_stylesheet_directory_uri()."/plugins/wp-fullcalendar/".$wpfc_theme;
-            	    wp_deregister_style('jquery-ui-css'); 
-            	    wp_enqueue_style('jquery-ui-css', $wpfc_theme_css, array('wp-fullcalendar'), WPFC_VERSION);
+            	    wp_deregister_style('jquery-ui'); 
+            	    wp_enqueue_style('jquery-ui', $wpfc_theme_css, array('wp-fullcalendar'), WPFC_VERSION);
 		        }
 		    }elseif( !empty($wpfc_theme) ){
     		    //We'll find the current jQuery UI version and attempt to load the right version of jQuery UI, otherwise we'll load the default. This allows backwards compatability from 3.6 onwards.
@@ -95,9 +102,9 @@ class WP_FullCalendar{
     		        $wpfc_theme_css = plugins_url('/includes/css/jquery-ui/'.$wpfc_theme.'/theme.css',__FILE__);
     		    }
             	if( !empty($wpfc_theme_css) ){   
-            	    wp_deregister_style('jquery-ui-css'); 
-            	    wp_enqueue_style('jquery-ui-css', $jquery_ui_css_uri, array('wp-fullcalendar'), WPFC_VERSION);
-            	    wp_enqueue_style('jquery-ui-css-theme', $wpfc_theme_css, array('wp-fullcalendar'), WPFC_VERSION);
+            	    wp_deregister_style('jquery-ui'); 
+            	    wp_enqueue_style('jquery-ui', $jquery_ui_css_uri, array('wp-fullcalendar'), WPFC_VERSION);
+            	    wp_enqueue_style('jquery-ui-theme', $wpfc_theme_css, array('wp-fullcalendar'), WPFC_VERSION);
             	}
 		    }
 	    }
@@ -131,17 +138,6 @@ class WP_FullCalendar{
     		}
 		}
 		//calendar translations
-		//This is taken from the Events Manager 5.2+ plugin. Improvements made here will be reflected there and vice-versa
-		$locale_code = get_locale();
-		$locale_code_short = substr ( $locale_code, 0, 2 );
-		include('wpfc-languages.php'); //see here for translations
-		$calendar_languages = wpfc_get_calendar_languages();
-		if( array_key_exists($locale_code, $calendar_languages) ){
-		    $js_vars['wpfc_locale'] = $calendar_languages[$locale_code];
-		}elseif( array_key_exists($locale_code_short, $calendar_languages) ){
-			$js_vars['wpfc_locale'] = $calendar_languages[$locale_code_short];
-		}
-		$js_vars['wpfc_locale']['firstDay'] =  $js_vars['firstDay']; //override firstDay with wp settings
 		wp_localize_script('wp-fullcalendar', 'WPFC', apply_filters('wpfc_js_vars', $js_vars));
 	}
 
@@ -153,9 +149,10 @@ class WP_FullCalendar{
 	    //sort out args
 	    unset($_REQUEST['month']); //no need for these two
 	    unset($_REQUEST['year']);
-	    //let's make 'end' a month and two weeks away from 'start' because we only need to view one month at a time +- a week each side
-	    if( $_REQUEST['end'] > $_REQUEST['start'] + (86400 * 46) ) $_REQUEST['end'] = $_REQUEST['start'] + (86400 * 46); //31 days + 15 days
-	    $args = array ('scope'=>array(date("Y-m-d", $_REQUEST['start']), date("Y-m-d", $_REQUEST['end'])), 'owner'=>false, 'status'=>1, 'order'=>'ASC', 'orderby'=>'post_date','full'=>1);
+	    //maybe excessive, but easy sanitization of start/end query params
+	    $_REQUEST['start'] = $_POST['start'] = date('Y-m-d', strtotime($_REQUEST['start']));
+	    $_REQUEST['end'] = $_POST['end'] = date('Y-m-d', strtotime($_REQUEST['end']));
+	    $args = array ('scope'=>array($_REQUEST['start'], $_REQUEST['end']), 'owner'=>false, 'status'=>1, 'order'=>'ASC', 'orderby'=>'post_date','full'=>1);
 	    //get post type and taxonomies, determine if we're filtering by taxonomy
 	    $post_types = get_post_types(array('public'=>true),'names');
 	    $post_type = !empty($_REQUEST['type']) && in_array($_REQUEST['type'], $post_types) ? $_REQUEST['type']:get_option('wpfc_default_type');
@@ -183,10 +180,11 @@ class WP_FullCalendar{
 	    //Create our own loop here and tamper with the where sql for date ranges, as per http://codex.wordpress.org/Class_Reference/WP_Query#Time_Parameters
 	    function wpfc_temp_filter_where( $where = '' ) {
 	        global $wpdb;
-	    	$where .= $wpdb->prepare(" AND post_date >= %s AND post_date < %s", date("Y-m-d", $_REQUEST['start']), date("Y-m-d", $_REQUEST['end']));
+	    	$where .= $wpdb->prepare(" AND post_date >= %s AND post_date < %s", $_REQUEST['start'], $_REQUEST['end']);
 	    	return $where;
 	    }
 	    add_filter( 'posts_where', 'wpfc_temp_filter_where' );
+	    do_action('wpfc_before_wp_query');
 		$the_query = new WP_Query( $args );
 	    remove_filter( 'posts_where', 'wpfc_temp_filter_where' );
 	    //loop through each post and slot them into the array of posts to return to browser
@@ -203,7 +201,7 @@ class WP_FullCalendar{
 	    		$item_dates_more[$post_date] = 1;
 	    		$day_ending = $post_date."T23:59:59";
 	    		//TODO archives not necesarrily working
-	    		$more_array = array ("title" => get_option('wpfc_limit_txt','more ...'), "color" => get_option('wpfc_limit_color','#fbbe30'), "start" => $day_ending, 'post_id' => 0, 'allDay' => true);
+	    		$more_array = array ("title" => get_option('wpfc_limit_txt','more ...'), "color" => get_option('wpfc_limit_color','#fbbe30'), "start" => $day_ending, 'post_id' => 0, 'className' => 'wpfc-more');
 	    		global $wp_rewrite;
 	    		$archive_url = get_post_type_archive_link($post_type);
 	    		if( !empty($archive_url) || $post_type == 'post' ){ //posts do have archives
@@ -254,8 +252,8 @@ class WP_FullCalendar{
 		add_action('wp_footer', array('WP_FullCalendar','footer_js'));
 		ob_start();
 		?>
-		<div id="wpfc-calendar-wrapper"><form id="wpfc-calendar"></form><div class="wpfc-loading"></div></div>
-		<div id="wpfc-calendar-search" style="display:none;">
+		<div class="wpfc-calendar-wrapper" id="wpfc-calendar-wrapper"><form class="wpfc-calendar" id="wpfc-calendar"></form><div class="wpfc-loading"></div></div>
+		<div class="wpfc-calendar-search" id="wpfc-calendar-search" style="display:none;">
 			<?php
 				$post_type = !empty(self::$args['type']) ? self::$args['type']:'post';
 				//figure out what taxonomies to show
@@ -304,7 +302,17 @@ class WP_FullCalendar{
 	public static function footer_js(){
 		?>
 		<script type='text/javascript'>
-		<?php include('includes/js/inline.js'); ?>
+		<?php 
+		  include('includes/js/inline.js');
+		  $locale_code = str_replace('_','-', get_locale());
+		  $file_long = dirname(__FILE__).'/includes/js/lang/'.$locale_code.'.js';
+		  $file_short = dirname(__FILE__).'/includes/js/lang/'.substr ( $locale_code, 0, 2 ).'.js';
+		  if( file_exists($file_short) ){
+		      include_once($file_short);
+		  }elseif( file_exists($file_long) ){
+		      include_once($file_long);
+		  }
+		?>
 		</script>
 		<?php
 	}
@@ -315,9 +323,9 @@ add_action('plugins_loaded',array('WP_FullCalendar','init'), 100);
 add_filter('plugin_action_links_'.plugin_basename(__FILE__), 'wpfc_settings_link', 10, 1);
 function wpfc_settings_link($links) {
 	$new_links = array(); //put settings first
-	$new_links[] = '<a href="'.admin_url('options-general.php?page=wp-fullcalendar').'">'.__('Settings', 'wpfc').'</a>';
+	$new_links[] = '<a href="'.admin_url('options-general.php?page=wp-fullcalendar').'">'.__('Settings', 'wp-fullcalendar').'</a>';
 	return array_merge($new_links,$links);
 }
 
 //translations
-load_plugin_textdomain('wpfc', false, dirname( plugin_basename( __FILE__ ) ).'/includes/langs');
+load_plugin_textdomain('wp-fullcalendar', false, dirname( plugin_basename( __FILE__ ) ).'/includes/langs');
